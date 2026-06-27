@@ -115,7 +115,14 @@ async function dbGetEspacios() {
   return await supaFetch("espacios?select=*&order=tipo,nombre") || [];
 }
 async function dbGetUsuarios() {
-  return await supaFetch("usuarios?select=*&order=nombre") || [];
+  return await supaFetch("usuarios?select=id,nombre,mail,rol,activo&order=nombre") || [];
+}
+async function dbVerificarLogin(id, clave) {
+  const res = await supaFetch("rpc/verificar_login", {
+    method: "POST",
+    body: JSON.stringify({ p_id: id, p_clave: clave })
+  });
+  return (res && res.length > 0) ? res[0] : null;
 }
 
 async function dbInsertReserva(r) {
@@ -305,7 +312,19 @@ function Login({usuarios, onLogin}){
   const filtrados=activos.filter(u=>u.nombre.toLowerCase().includes(busq.toLowerCase()));
   const usuSel=activos.find(u=>u.id===sel);
 
-  const elegir=(u)=>{setSel(u.id);setBusq(u.nombre);setAbierto(false);};
+  const [clave,setClave]=useState("");
+  const [error,setError]=useState("");
+  const [cargando,setCargando]=useState(false);
+
+  const elegir=(u)=>{setSel(u.id);setBusq(u.nombre);setAbierto(false);setClave("");setError("");};
+
+  const entrar=async()=>{
+    if(!sel||!clave||cargando) return;
+    setCargando(true); setError("");
+    const u=await dbVerificarLogin(sel, clave);
+    setCargando(false);
+    if(u){ onLogin(sel); } else { setError("Contraseña incorrecta. Intentá de nuevo."); }
+  };
 
   return(
     <div className="min-h-screen flex items-center justify-center p-4" style={{background:`linear-gradient(135deg,${C.verde3} 0%,${C.verde} 50%,${C.celeste} 100%)`}}>
@@ -368,12 +387,28 @@ function Login({usuarios, onLogin}){
             </div>
           )}
 
+          {usuSel&&(
+            <div>
+              <p className="text-sm font-semibold text-slate-600 mb-2">Contraseña</p>
+              <input
+                type="password"
+                value={clave}
+                onChange={e=>{setClave(e.target.value);setError("");}}
+                onKeyDown={e=>{if(e.key==="Enter")entrar();}}
+                placeholder="Ingresá tu contraseña"
+                className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors"
+                style={{borderColor:error?"#EF4444":(clave?C.verde:"")}}
+              />
+              {error&&<p className="text-xs mt-1.5" style={{color:"#EF4444"}}>{error}</p>}
+            </div>
+          )}
+
           <button
-            onClick={()=>sel&&onLogin(sel)}
-            disabled={!sel}
+            onClick={entrar}
+            disabled={!sel||!clave||cargando}
             className="w-full py-3 rounded-xl text-white font-bold text-sm transition-all"
-            style={{background:sel?`linear-gradient(135deg,${C.verde},${C.celeste})`:"#CBD5E1",cursor:sel?"pointer":"not-allowed"}}>
-            Ingresar al sistema
+            style={{background:(sel&&clave&&!cargando)?`linear-gradient(135deg,${C.verde},${C.celeste})`:"#CBD5E1",cursor:(sel&&clave&&!cargando)?"pointer":"not-allowed"}}>
+            {cargando?"Verificando...":"Ingresar al sistema"}
           </button>
         </div>
       </div>
