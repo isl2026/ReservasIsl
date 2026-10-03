@@ -708,9 +708,13 @@ function FormSala({espacios,reservas,usuario,onSubmit}){
     const er={};
     if(!f.espacioId) er.esp="Seleccioná un espacio";
     if(!f.esRec&&!f.fecha) er.fecha="Ingresá la fecha";
+    if(!f.esRec&&f.fecha&&eSpacioSel?.activo_hasta&&f.fecha>eSpacioSel.activo_hasta)
+      er.fecha="Este espacio no está disponible después del "+eSpacioSel.activo_hasta;
     if(f.esRec&&f.dias.length===0) er.dias="Seleccioná al menos un día";
     if(f.esRec&&!f.fDesde) er.fDesde="Requerido";
     if(f.esRec&&!f.fHasta) er.fHasta="Requerido";
+    if(f.esRec&&f.fHasta&&eSpacioSel?.activo_hasta&&f.fHasta>eSpacioSel.activo_hasta)
+      er.fHasta="Este espacio no está disponible después del "+eSpacioSel.activo_hasta;
     if(!f.hDesde) er.hDesde="Seleccioná hora de inicio";
     if(!f.hHasta||f.hHasta<=f.hDesde) er.hHasta="Debe ser posterior a hora desde";
     if(!f.responsable.trim()) er.resp="Requerido";
