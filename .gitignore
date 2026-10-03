@@ -2,3 +2,10 @@ node_modules/
 build/
 .env
 .DS_Store
+dist/
+node_modules/
+package-lock.json
+public/
+src/
+webpack.config.js
+
