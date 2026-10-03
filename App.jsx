@@ -183,7 +183,10 @@ async function dbGetReservas() {
 }
 async function dbGetEspacios() {
   const data = await supaFetch("espacios?select=*&order=tipo,nombre") || [];
-  return data.map(e=>({...e, hDesde:e.h_desde||null, hHasta:e.h_hasta||null}));
+  const hoy = new Date().toISOString().slice(0,10);
+  return data
+    .filter(e => !e.activo_hasta || e.activo_hasta >= hoy)
+    .map(e=>({...e, hDesde:e.h_desde||null, hHasta:e.h_hasta||null}));
 }
 async function dbGetUsuarios() {
   const data = await supaFetch("usuarios?select=*&order=nombre") || [];
