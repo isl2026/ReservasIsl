@@ -700,8 +700,8 @@ function FormSala({espacios,reservas,usuario,onSubmit}){
       })
     );
     // Solo puede llegar hasta proxInicio (inclusive) — no puede solaparse
-    return HORAS.filter(h=>h>f.hDesde&&(!proxInicio||h<=proxInicio));
-  })() : f.hDesde ? HORAS.filter(h=>h>f.hDesde) : [];
+    return horasBase.filter(h=>h>f.hDesde&&(!proxInicio||h<=proxInicio));
+  })() : f.hDesde ? horasBase.filter(h=>h>f.hDesde) : [];
   const sinDisponibilidad = f.espacioId&&f.fecha&&!f.esRec&&hDesdeDisp.length===0;
 
   const validate=()=>{
@@ -978,8 +978,8 @@ function FormNB({espacios,reservas,usuario,onSubmit}){
       })
     );
     // Solo puede llegar hasta proxInicio (inclusive) — no puede solaparse
-    return HORAS.filter(h=>h>f.hDesde&&(!proxInicio||h<=proxInicio));
-  })() : f.hDesde ? HORAS.filter(h=>h>f.hDesde) : [];
+    return horasBase.filter(h=>h>f.hDesde&&(!proxInicio||h<=proxInicio));
+  })() : f.hDesde ? horasBase.filter(h=>h>f.hDesde) : [];
   const sinDisponibilidad = f.espacioId&&f.fecha&&!f.esRec&&hDesdeDisp.length===0;
 
   const validate=()=>{
