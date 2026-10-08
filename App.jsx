@@ -680,7 +680,7 @@ function FormSala({espacios,reservas,usuario,onSubmit}){
   });
   const togDia=v=>setF(p=>({...p,dias:p.dias.includes(v)?p.dias.filter(x=>x!==v):[...p.dias,v]}));
 
-  const eSpacioSel = salas.find(s=>s.id===f.espacioId)||null;
+  const eSpacioSel = nbs.find(s=>s.id===f.espacioId)||null;
   const _hMin = eSpacioSel?.hDesde||null;
   const _hMax = eSpacioSel?.hHasta||null;
   const horasBase = (_hMin||_hMax) ? HORAS.filter(h=>(!_hMin||h>=_hMin)&&(!_hMax||h<=_hMax)) : HORAS;
@@ -962,7 +962,7 @@ function FormNB({espacios,reservas,usuario,onSubmit}){
   const [conflicto,setConflicto]=useState(false);
   const togDia=v=>setF(p=>({...p,dias:p.dias.includes(v)?p.dias.filter(x=>x!==v):[...p.dias,v]}));
 
-  const eSpacioSel = salas.find(s=>s.id===f.espacioId)||null;
+  const eSpacioSel = nbs.find(s=>s.id===f.espacioId)||null;
   const _hMin = eSpacioSel?.hDesde||null;
   const _hMax = eSpacioSel?.hHasta||null;
   const horasBase = (_hMin||_hMax) ? HORAS.filter(h=>(!_hMin||h>=_hMin)&&(!_hMax||h<=_hMax)) : HORAS;
