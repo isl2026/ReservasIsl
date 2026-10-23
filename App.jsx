@@ -1801,7 +1801,7 @@ function GrillaSemanal({reservas,espacios,feriados=[]}){
 // ─── Config Usuarios ──────────────────────────────────────────────────────────
 function ConfigUsuarios({usuarios,onSave}){
   const [lista,setLista]=useState(usuarios);
-  const [nuevo,setNuevo]=useState({nombre:"",mail:"",cel:"",rol:"lider",sinMail:false});
+  const [nuevo,setNuevo]=useState({nombre:"",mail:"",cel:"",rol:"lider",sinMail:false,clave:""});
   const [errNuevo,setErrNuevo]=useState("");
   const upd=(id,k,v)=>setLista(p=>p.map(u=>u.id===id?{...u,[k]:v}:u));
   const add=()=>{
@@ -1809,7 +1809,7 @@ function ConfigUsuarios({usuarios,onSave}){
     if(!nuevo.sinMail&&!nuevo.mail.trim()){setErrNuevo("Ingresá un mail o tildá 'Sin mail'");return;}
     setErrNuevo("");
     setLista(p=>[...p,{...nuevo,mail:nuevo.sinMail?"":nuevo.mail,id:uid(),activo:true}]);
-    setNuevo({nombre:"",mail:"",cel:"",rol:"lider",sinMail:false});
+    setNuevo({nombre:"",mail:"",cel:"",rol:"lider",sinMail:false,clave:""});
   };
   const F="border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-green-300";
   return(
@@ -1886,6 +1886,95 @@ function ConfigUsuarios({usuarios,onSave}){
 }
 
 // ─── Config Espacios ──────────────────────────────────────────────────────────
+function ConfigUsuariosLider({usuarios,onSave}){
+  const [lista,setLista]=useState(usuarios);
+  const [nuevo,setNuevo]=useState({nombre:"",mail:"",cel:"",rol:"lider",sinMail:false,clave:""});
+  const [errNuevo,setErrNuevo]=useState("");
+  const upd=(id,k,v)=>setLista(p=>p.map(u=>u.id===id?{...u,[k]:v}:u));
+  const add=()=>{
+    if(!nuevo.nombre.trim()){setErrNuevo("El nombre es obligatorio");return;}
+    if(!nuevo.sinMail&&!nuevo.mail.trim()){setErrNuevo("Ingresá un mail o tildá 'Sin mail'");return;}
+    setErrNuevo("");
+    setLista(p=>[...p,{...nuevo,mail:nuevo.sinMail?"":nuevo.mail,id:uid(),activo:true}]);
+    setNuevo({nombre:"",mail:"",cel:"",rol:"lider",sinMail:false,clave:""});
+  };
+  const F="border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-green-300";
+  return(
+    <div className="space-y-3">
+      <div className="space-y-2">
+        {lista.map(u=>(
+          <div key={u.id} className={"p-3 rounded-xl border "+(u.activo?"bg-white border-slate-200":"bg-slate-50 border-slate-100 opacity-60")}>
+            <div className="flex flex-wrap items-center gap-2">
+              <input value={u.nombre} onChange={ev=>upd(u.id,"nombre",ev.target.value)}
+                className="flex-1 min-w-[130px] border-0 outline-none text-sm font-semibold text-slate-700 bg-transparent"/>
+              <input value={u.mail||""} onChange={ev=>upd(u.id,"mail",ev.target.value)}
+                placeholder="mail@islarg.com.ar" className={F+" flex-1 min-w-[130px]"}/>
+              <input value={u.cel||""} onChange={ev=>upd(u.id,"cel",ev.target.value)}
+                placeholder="WhatsApp" className={F+" w-36"}/>
+              <input type="password" value={u.clave||generarClave(u.nombre)} readOnly
+                placeholder="Clave" className={F+" w-20"} title="Clave de acceso (solo visible para admins)"/>
+              <select value={u.rol} onChange={ev=>upd(u.id,"rol",ev.target.value)} className={F}>
+                <option value="lider">Líder</option>
+                <option value="gestor">Gestor Cadetes</option>
+                <option value="cadete">Cadete</option>
+              </select>
+              {u.rol==="cadete"&&(
+                <>
+                  <input value={u.hDesde||""} onChange={ev=>upd(u.id,"hDesde",ev.target.value)}
+                    placeholder="09:00" className={F+" w-16"}/>
+                  <input value={u.hHasta||""} onChange={ev=>upd(u.id,"hHasta",ev.target.value)}
+                    placeholder="18:00" className={F+" w-16"}/>
+                </>
+              )}
+              <button onClick={()=>upd(u.id,"activo",!u.activo)}
+                className={"text-xs px-2 py-1 rounded-lg font-semibold "+(u.activo?"bg-red-50 text-red-500":"bg-green-50 text-green-600")}>
+                {u.activo?"Desact.":"Activar"}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="border-t border-slate-200 pt-4 space-y-2">
+        <p className="text-xs font-bold text-slate-500 uppercase">Agregar usuario</p>
+        <div className="flex gap-2 flex-wrap">
+          <input value={nuevo.nombre} onChange={e=>setNuevo(p=>({...p,nombre:e.target.value}))} placeholder="Nombre y apellido"
+            className="flex-1 min-w-[130px] border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"/>
+          <div className="flex items-center gap-2 flex-1 min-w-[130px]">
+            <input value={nuevo.mail} onChange={e=>setNuevo(p=>({...p,mail:e.target.value}))}
+              placeholder="mail@islarg.com.ar" disabled={nuevo.sinMail}
+              className={"flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300 "+(nuevo.sinMail?"opacity-40 bg-slate-100":"")}/>
+            <label className="flex items-center gap-1 text-xs text-slate-500 cursor-pointer whitespace-nowrap">
+              <input type="checkbox" checked={nuevo.sinMail}
+                onChange={e=>setNuevo(p=>({...p,sinMail:e.target.checked,mail:""}))}
+                className="w-3 h-3 accent-green-600"/>
+              Sin mail
+            </label>
+          </div>
+          <input value={nuevo.cel} onChange={e=>setNuevo(p=>({...p,cel:e.target.value}))} placeholder="WhatsApp"
+            className="w-36 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"/>
+          <input value={nuevo.clave} onChange={e=>setNuevo(p=>({...p,clave:e.target.value}))} placeholder="Clave genérica"
+            className="w-36 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"/>
+          <select value={nuevo.rol} onChange={e=>setNuevo(p=>({...p,rol:e.target.value}))}
+            className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+            <option value="lider">Líder</option>
+            <option value="gestor">Gestor Cadetes</option>
+            <option value="cadete">Cadete</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button onClick={add} className="px-4 py-2 rounded-xl text-white text-sm font-bold" style={{background:C.verde}}>+ Agregar</button>
+        </div>
+        {errNuevo&&<p className="text-red-500 text-xs font-semibold mt-1">⚠️ {errNuevo}</p>}
+      </div>
+      <button onClick={()=>onSave(lista)} className="w-full py-3 rounded-xl text-white font-bold text-sm"
+        style={{background:"linear-gradient(135deg,#6C9F51,#9EC3E7)"}}>
+        Guardar usuarios
+      </button>
+    </div>
+  );
+}
+
+// ─── Config Espacios ──────────────────────────────────────────────────────────
+
 // ─── Config Borrado Masivo ────────────────────────────────────────────────────
 function ConfigBorrado({reservas, onBorrar}){
   const [desde,setDesde]=useState("");
@@ -3362,6 +3451,7 @@ export default function App(){
     {k:"mis",     icon:"📋", label:"Mis reservas"},
     {k:"ocup",    icon:"📊", label:"Gestión de Agenda"},
     {k:"cadetes", icon:"🚴", label:"Cadetería"},
+    {k:"config",  icon:"👥", label:"Usuarios"},
     {k:"miclave", icon:"🔑", label:"Mi clave"},
   ];
   const NAV_ADMIN=[
@@ -3443,7 +3533,7 @@ export default function App(){
             {NAV.map(n=>{
               const active = vista===n.k;
               return(
-                <button key={n.k} onClick={()=>{setVista(n.k);setMenuAbierto(false);}}
+                <button key={n.k} onClick={()=>{setVista(n.k);setMenuAbierto(false);if(n.k==="config")setSubConfig(isLider?"usuarios":"espacios");}}
                   className="relative w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all group"
                   style={{
                     background: active?"linear-gradient(90deg,rgba(161,190,80,0.18),rgba(158,195,231,0.08))":"transparent",
@@ -3669,11 +3759,11 @@ export default function App(){
             </div>
           )}
 
-          {vista==="config"&&isAdmin&&(
+          {vista==="config"&&(isAdmin||isLider)&&(
             <div className="rounded-2xl shadow-sm p-6" style={{background:"#EEF5E0",border:"1px solid #D4E8B0"}}>
-              <h1 className="text-xl font-bold mb-5" style={{color:"#111"}}>Configuración</h1>
+              <h1 className="text-xl font-bold mb-5" style={{color:"#111"}}>{isAdmin?"Configuración":"👥 Usuarios"}</h1>
               <div className="flex gap-2 mb-5 flex-wrap">
-                {[{k:"espacios",l:"⚙️ Espacios"},{k:"usuarios",l:"👥 Usuarios"},{k:"feriados",l:"🏖️ Feriados"},{k:"remitos",l:"📄 Remitos"},{k:"firmados",l:"📷 Firmados"},{k:"borrado",l:"🗑️ Borrado"}].map(t=>(
+                {(isAdmin?[{k:"espacios",l:"⚙️ Espacios"},{k:"usuarios",l:"👥 Usuarios"},{k:"feriados",l:"🏖️ Feriados"},{k:"remitos",l:"📄 Remitos"},{k:"firmados",l:"📷 Firmados"},{k:"borrado",l:"🗑️ Borrado"}]:[{k:"usuarios",l:"👥 Usuarios"}]).map(t=>(
                   <button key={t.k} onClick={()=>setSubConfig(t.k)}
                     className={"px-4 py-2 rounded-xl text-sm font-bold transition-all "+(subConfig===t.k?"text-white":"bg-slate-100 text-slate-600 hover:bg-slate-200")}
                     style={subConfig===t.k?{background:t.k==="borrado"?"#DC2626":C.verde}:{}}>
@@ -3681,8 +3771,8 @@ export default function App(){
                   </button>
                 ))}
               </div>
-              {subConfig==="espacios"&&<ConfigEspacios espacios={espacios} onSave={guardarEsp}/>}
-              {subConfig==="usuarios"&&<ConfigUsuarios usuarios={usuarios} onSave={guardarUsr}/>}
+              {subConfig==="espacios"&&isAdmin&&<ConfigEspacios espacios={espacios} onSave={guardarEsp}/>}
+              {subConfig==="usuarios"&&(isAdmin?<ConfigUsuarios usuarios={usuarios} onSave={guardarUsr}/>:<ConfigUsuariosLider usuarios={usuarios} onSave={guardarUsr}/>)}
               {subConfig==="feriados"&&<ConfigFeriados feriados={feriados} onSave={guardarFeriados}/>}
               {subConfig==="remitos"&&<HistorialRemitos/>}
               {subConfig==="firmados"&&<RemitasFirmadas pedidos={pedidos} usuarios={usuarios}/>}
