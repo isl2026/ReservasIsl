@@ -257,30 +257,22 @@ async function dbSaveEspacios(lista) {
 }
 
 async function dbSaveUsuarios(lista) {
-  // Get existing IDs first
   const existing = await dbGetUsuarios();
   const existIds = new Set(existing.map(u=>u.id));
-  
   for(const u of lista) {
     const payload = {
       id: u.id, nombre:u.nombre, mail:u.mail||"", cel:u.cel||"",
-      rol:u.rol, activo:u.activo,
+      rol:u.rol, activo:u.activo!=null?u.activo:true,
       h_desde:u.hDesde||null, h_hasta:u.hHasta||null,
       clave:u.clave||(generarClave(u.nombre))
     };
+    let res;
     if(existIds.has(u.id)) {
-      // Update existing
-      await supaFetch("usuarios?id=eq."+u.id, {
-        method: "PATCH",
-        body: JSON.stringify(payload)
-      });
+      res = await supaFetch("usuarios?id=eq."+u.id, {method:"PATCH", body:JSON.stringify(payload)});
     } else {
-      // Insert new
-      await supaFetch("usuarios", {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
+      res = await supaFetch("usuarios", {method:"POST", body:JSON.stringify(payload)});
     }
+    if(res && res._error) throw new Error(res.message || res.hint || JSON.stringify(res));
   }
 }
 
@@ -3294,11 +3286,15 @@ export default function App(){
   },[]);
   const guardarUsr=useCallback(async u=>{
     setUsuarios(u);
-    await dbSaveUsuarios(u);
-    // Reload from DB to get latest data including new users
-    const fresh = await dbGetUsuarios();
-    if(fresh && fresh.length>0) setUsuarios(fresh);
-    showToast("Usuarios guardados");
+    try {
+      await dbSaveUsuarios(u);
+      const fresh = await dbGetUsuarios();
+      if(fresh && fresh.length>0) setUsuarios(fresh);
+      showToast("✅ Usuarios guardados");
+    } catch(err) {
+      console.error("guardarUsr error:", err);
+      showToast("❌ Error al guardar: " + (err?.message||String(err)));
+    }
   },[]);
 
   const guardarFeriados=useCallback(async f=>{
@@ -3453,7 +3449,6 @@ export default function App(){
     {k:"mis",     icon:"📋", label:"Mis reservas"},
     {k:"ocup",    icon:"📊", label:"Gestión de Agenda"},
     {k:"cadetes", icon:"🚴", label:"Cadetería"},
-    {k:"config",  icon:"👥", label:"Usuarios"},
     {k:"miclave", icon:"🔑", label:"Mi clave"},
   ];
   const NAV_ADMIN=[
@@ -3543,7 +3538,7 @@ export default function App(){
             {NAV.map(n=>{
               const active = vista===n.k;
               return(
-                <button key={n.k} onClick={()=>{setVista(n.k);setMenuAbierto(false);if(n.k==="config")setSubConfig((isLider||isCoordinador)?"usuarios":"espacios");}}
+                <button key={n.k} onClick={()=>{setVista(n.k);setMenuAbierto(false);if(n.k==="config")setSubConfig(isCoordinador?"usuarios":"espacios");}}
                   className="relative w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all group"
                   style={{
                     background: active?"linear-gradient(90deg,rgba(161,190,80,0.18),rgba(158,195,231,0.08))":"transparent",
@@ -3769,7 +3764,7 @@ export default function App(){
             </div>
           )}
 
-          {vista==="config"&&(isAdmin||isLider||isCoordinador)&&(
+          {vista==="config"&&(isAdmin||isCoordinador)&&(
             <div className="rounded-2xl shadow-sm p-6" style={{background:"#EEF5E0",border:"1px solid #D4E8B0"}}>
               <h1 className="text-xl font-bold mb-5" style={{color:"#111"}}>{isAdmin?"Configuración":"👥 Usuarios"}</h1>
               <div className="flex gap-2 mb-5 flex-wrap">
