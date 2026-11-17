@@ -275,11 +275,10 @@ async function dbSaveUsuarios(lista) {
         body: JSON.stringify(payload)
       });
     } else {
-      // Insert new - use upsert to avoid conflicts
+      // Insert new
       await supaFetch("usuarios", {
         method: "POST",
-        body: JSON.stringify(payload),
-        prefer: "resolution=merge-duplicates"
+        body: JSON.stringify(payload)
       });
     }
   }
@@ -1828,6 +1827,7 @@ function ConfigUsuarios({usuarios,onSave}){
                 placeholder="Clave" className={F+" w-20"} title="Clave de acceso"/>
               <select value={u.rol} onChange={ev=>upd(u.id,"rol",ev.target.value)} className={F}>
                 <option value="lider">Líder</option>
+                <option value="coordinador">Coordinador</option>
                 <option value="gestor">Gestor Cadetes</option>
                 <option value="cadete">Cadete</option>
                 <option value="admin">Admin</option>
@@ -1869,6 +1869,7 @@ function ConfigUsuarios({usuarios,onSave}){
           <select value={nuevo.rol} onChange={e=>setNuevo(p=>({...p,rol:e.target.value}))}
             className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
             <option value="lider">Líder</option>
+            <option value="coordinador">Coordinador</option>
             <option value="gestor">Gestor Cadetes</option>
             <option value="cadete">Cadete</option>
             <option value="admin">Admin</option>
@@ -3444,6 +3445,7 @@ export default function App(){
   const isCadete=usuario.rol==="cadete";
   const isGestor=usuario.rol==="gestor";
   const isLider=usuario.rol==="lider";
+  const isCoordinador=usuario.rol==="coordinador";
   const pedPend=pedidos.filter(p=>p.cadeteId===usuario.id&&p.estado==="pendiente").length;
 
   const NAV_LIDER=[
@@ -3461,6 +3463,14 @@ export default function App(){
     {k:"cadetes",   icon:"🚴", label:"Cadetería"},
     {k:"config",    icon:"⚙️", label:"Configurar"},
   ];
+  const NAV_COORDINADOR=[
+    {k:"reserva", icon:"📅", label:"Nueva reserva"},
+    {k:"mis",     icon:"📋", label:"Mis reservas"},
+    {k:"ocup",    icon:"📊", label:"Gestión de Agenda"},
+    {k:"cadetes", icon:"🚴", label:"Cadetería"},
+    {k:"config",  icon:"👥", label:"Usuarios"},
+    {k:"miclave", icon:"🔑", label:"Mi clave"},
+  ];
   const NAV_GESTOR=[
     {k:"cadetes",  icon:"🚴", label:"Cadetería"},
     {k:"ocup",     icon:"📊", label:"Gestión de Agenda"},
@@ -3471,7 +3481,7 @@ export default function App(){
     {k:"ocup",      icon:"📊", label:"Gestión de Agenda"},
     {k:"miclave",   icon:"🔑", label:"Mi clave"},
   ];
-  const NAV=isAdmin?NAV_ADMIN:isCadete?NAV_CADETE:isGestor?NAV_GESTOR:NAV_LIDER;
+  const NAV=isAdmin?NAV_ADMIN:isCadete?NAV_CADETE:isGestor?NAV_GESTOR:isCoordinador?NAV_COORDINADOR:NAV_LIDER;
 
   return(
     <div className="flex flex-col min-h-screen font-sans" style={{background:"#F5F5F5",fontSize:"15px"}}>
@@ -3533,7 +3543,7 @@ export default function App(){
             {NAV.map(n=>{
               const active = vista===n.k;
               return(
-                <button key={n.k} onClick={()=>{setVista(n.k);setMenuAbierto(false);if(n.k==="config")setSubConfig(isLider?"usuarios":"espacios");}}
+                <button key={n.k} onClick={()=>{setVista(n.k);setMenuAbierto(false);if(n.k==="config")setSubConfig((isLider||isCoordinador)?"usuarios":"espacios");}}
                   className="relative w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all group"
                   style={{
                     background: active?"linear-gradient(90deg,rgba(161,190,80,0.18),rgba(158,195,231,0.08))":"transparent",
@@ -3759,7 +3769,7 @@ export default function App(){
             </div>
           )}
 
-          {vista==="config"&&(isAdmin||isLider)&&(
+          {vista==="config"&&(isAdmin||isLider||isCoordinador)&&(
             <div className="rounded-2xl shadow-sm p-6" style={{background:"#EEF5E0",border:"1px solid #D4E8B0"}}>
               <h1 className="text-xl font-bold mb-5" style={{color:"#111"}}>{isAdmin?"Configuración":"👥 Usuarios"}</h1>
               <div className="flex gap-2 mb-5 flex-wrap">
