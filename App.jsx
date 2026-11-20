@@ -156,6 +156,19 @@ async function supaFetch(path, opts={}) {
 async function stGet(k){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch{ return null; } }
 async function stSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} }
 
+async function dbGetFeriados(){
+  const r = await supaFetch("feriados?id=eq.singleton");
+  if(r && r.length>0 && r[0].datos) return r[0].datos;
+  return null;
+}
+async function dbSaveFeriados(lista){
+  const res = await supaFetch("feriados?id=eq.singleton",{
+    method:"PATCH",
+    body:JSON.stringify({datos:lista})
+  });
+  if(res && res._error) throw new Error(res.message||JSON.stringify(res));
+}
+
 async function dbGetPedidos(){
   const r=await supaFetch("pedidos?order=creado_en.desc");
   if(!r) return [];
@@ -3235,7 +3248,7 @@ export default function App(){
   },[]);
 
   useEffect(()=>{
-    Promise.all([dbGetReservas(), dbGetEspacios(), dbGetUsuarios(), stGet(K_FERIADOS), dbGetPedidos()]).then(([r,e,u,fer,ped])=>{
+    Promise.all([dbGetReservas(), dbGetEspacios(), dbGetUsuarios(), dbGetFeriados(), dbGetPedidos()]).then(([r,e,u,fer,ped])=>{
       if(r && r.length>0) setReservas(r.map(mapReserva));
       if(e && e.length>0) setEspacios(e);
       if(u && u.length>0) setUsuarios(u);
@@ -3299,8 +3312,12 @@ export default function App(){
 
   const guardarFeriados=useCallback(async f=>{
     setFeriados(f);
-    await stSet(K_FERIADOS,f);
-    showToast("Feriados guardados");
+    try {
+      await dbSaveFeriados(f);
+      showToast("✅ Feriados guardados");
+    } catch(err) {
+      showToast("❌ Error al guardar feriados: "+(err?.message||String(err)));
+    }
   },[]);
 
   const agregarPedido=useCallback(async p=>{
